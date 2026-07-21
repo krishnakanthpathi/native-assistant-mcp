@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Native Assistant MCP - Tool Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tool-card { transition: all 0.2s ease; }
+        .tool-card:hover { transform: translateY(-2px); }
+        .result-box { max-height: 400px; overflow-y: auto; }
+        .category-section { border-left: 3px solid #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-400 mb-2">Native Assistant MCP</h1>
+            <p class="text-gray-400">Tool Testing Dashboard</p>
+        </header>
+
+        <div class="mb-6 flex gap-4">
+            <input type="text" id="searchInput" placeholder="Search tools..." 
+                class="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500">
+            <select id="categoryFilter" class="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+
+        <div id="toolsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        </div>
+
+        <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="modalTitle" class="text-xl font-bold text-blue-400"></h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <pre id="modalResult" class="bg-gray-900 p-4 rounded text-sm overflow-x-auto result-box"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tools = [
+            { category: 'Volume', name: 'volume_set', desc: 'Set system volume (0-100)', params: [{name: 'level', type: 'number', default: 50}] },
+            { category: 'Volume', name: 'get_volume', desc: 'Get current system volume', params: [] },
+            { category: 'Active Window', name: 'get_active_window', desc: 'Get current active window', params: [] },
+            { category: 'Apps', name: 'list_applications', desc: 'List installed applications', params: [] },
+            { category: 'Apps', name: 'open_application', desc: 'Open an application', params: [{name: 'app', type: 'text', default: 'Finder'}] },
+            { category: 'Apps', name: 'close_application', desc: 'Close an application', params: [{name: 'app', type: 'text', default: ''}] },
+            { category: 'Apps', name: 'iphone_mirror', desc: 'Launch iPhone Mirroring', params: [{name: 'action', type: 'select', options: ['launch', 'focus'], default: 'launch'}] },
+            { category: 'System', name: 'set_dark_mode', desc: 'Toggle dark mode', params: [{name: 'enable', type: 'boolean', default: true}] },
+            { category: 'System', name: 'empty_trash', desc: 'Empty the Trash', params: [] },
+            { category: 'System', name: 'get_system_stats', desc: 'Get system statistics', params: [] },
+            { category: 'System', name: 'lock_screen', desc: 'Lock the screen', params: [] },
+            { category: 'System', name: 'say_speech', desc: 'Speak text aloud', params: [{name: 'text', type: 'text', default: 'Hello!'}] },
+            { category: 'System', name: 'system_power', desc: 'Sleep/restart/shutdown', params: [{name: 'action', type: 'select', options: ['sleep', 'restart', 'shutdown'], default: 'sleep'}] },
+            { category: 'System', name: 'take_screenshot', desc: 'Take a screenshot', params: [{name: 'target', type: 'select', options: ['screen', 'window', 'iphone_mirror'], default: 'screen'}] },
+            { category: 'System', name: 'notify', desc: 'Send notification', params: [{name: 'title', type: 'text', default: 'Test'}, {name: 'body', type: 'text', default: 'Test body'}] },
+            { category: 'System', name: 'prompt_user', desc: 'Show dialog prompt', params: [{name: 'message', type: 'text', default: 'Enter value:'}] },
+            { category: 'System', name: 'get_date_time', desc: 'Get current date/time', params: [] },
+            { category: 'System', name: 'clipboard_read', desc: 'Read clipboard', params: [{name: 'content_type', type: 'select', options: ['string', 'image', 'file_urls', 'rtf'], default: 'string'}] },
+            { category: 'System', name: 'clipboard_write', desc: 'Write to clipboard', params: [{name: 'content_type', type: 'text', default: 'string'}, {name: 'value', type: 'text', default: ''}] },
+            { category: 'Input', name: 'mouse_move', desc: 'Move mouse cursor', params: [{name: 'x', type: 'number', default: 500}, {name: 'y', type: 'number', default: 500}] },
+            { category: 'Input', name: 'mouse_click', desc: 'Click mouse', params: [{name: 'x', type: 'number', default: 500}, {name: 'y', type: 'number', default: 500}, {name: 'button', type: 'select', options: ['left', 'right', 'middle'], default: 'left'}] },
+            { category: 'Input', name: 'mouse_drag', desc: 'Drag mouse', params: [{name: 'from_x', type: 'number', default: 100}, {name: 'from_y', type: 'number', default: 100}, {name: 'to_x', type: 'number', default: 300}, {name: 'to_y', type: 'number', default: 300}] },
+            { category: 'Input', name: 'mouse_scroll', desc: 'Scroll mouse', params: [{name: 'dx', type: 'number', default: 0}, {name: 'dy', type: 'number', default: -5}] },
+            { category: 'Input', name: 'key_press', desc: 'Press a key', params: [{name: 'key', type: 'text', default: 'enter'}, {name: 'modifiers', type: 'text', default: ''}] },
+            { category: 'Input', name: 'type_text', desc: 'Type text', params: [{name: 'text', type: 'text', default: 'Hello World'}] },
+            { category: 'Input', name: 'keystroke_action', desc: 'Keystroke action', params: [{name: 'action', type: 'select', options: ['type', 'shortcut', 'press'], default: 'type'}, {name: 'text', type: 'text', default: 'test'}] },
+            { category: 'Input', name: 'media_control', desc: 'Control media playback', params: [{name: 'action', type: 'select', options: ['play', 'pause', 'playpause', 'next', 'previous'], default: 'playpause'}, {name: 'player', type: 'select', options: ['Music', 'Spotify'], default: 'Music'}] },
+            { category: 'File System', name: 'fs_read', desc: 'Read a file', params: [{name: 'path', type: 'text', default: '/Users/krishnakanth/.zshrc'}] },
+            { category: 'File System', name: 'fs_read_many', desc: 'Read multiple files', params: [{name: 'paths', type: 'text', default: '["/Users/krishnakanth/.zshrc"]'}] },
+            { category: 'File System', name: 'fs_write', desc: 'Write a file', params: [{name: 'path', type: 'text', default: '/Users/krishnakanth/test.txt'}, {name: 'content', type: 'text', default: 'test content'}] },
+            { category: 'File System', name: 'fs_list', desc: 'List directory', params: [{name: 'path', type: 'text', default: '/Users/krishnakanth'}] },
+            { category: 'File System', name: 'fs_stat', desc: 'Get file stats', params: [{name: 'path', type: 'text', default: '/Users/krishnakanth/.zshrc'}] },
+            { category: 'File System', name: 'fs_copy', desc: 'Copy file/dir', params: [{name: 'src', type: 'text', default: ''}, {name: 'dst', type: 'text', default: ''}] },
+            { category: 'File System', name: 'fs_move', desc: 'Move file/dir', params: [{name: 'src', type: 'text', default: ''}, {name: 'dst', type: 'text', default: ''}] },
+            { category: 'File System', name: 'fs_make_dir', desc: 'Create directory', params: [{name: 'path', type: 'text', default: '/Users/krishnakanth/new_dir'}] },
+            { category: 'File System', name: 'fs_delete', desc: 'Delete file/dir', params: [{name: 'path', type: 'text', default: ''}] },
+            { category: 'Process', name: 'process_run', desc: 'Run a process', params: [{name: 'command', type: 'text', default: 'ls'}, {name: 'args', type: 'text', default: '[]'}] },
+            { category: 'Process', name: 'process_list', desc: 'List processes', params: [] },
+            { category: 'Process', name: 'process_kill', desc: 'Kill a process', params: [{name: 'pid', type: 'number', default: 0}, {name: 'sig', type: 'text', default: 'SIGTERM'}] },
+            { category: 'Shortcuts', name: 'shortcut_list', desc: 'List shortcuts', params: [] },
+            { category: 'Shortcuts', name: 'shortcut_run', desc: 'Run a shortcut', params: [{name: 'name', type: 'text', default: ''}] },
+            { category: 'Shortcuts', name: 'wait_ms', desc: 'Wait milliseconds', params: [{name: 'ms', type: 'number', default: 1000}] },
+            { category: 'Window', name: 'list_apps', desc: 'List running apps', params: [] },
+            { category: 'Window', name: 'list_windows', desc: 'List windows', params: [] },
+            { category: 'Window', name: 'focus_app', desc: 'Focus an app', params: [{name: 'bundle_id', type: 'text', default: ''}, {name: 'name', type: 'text', default: 'Safari'}] },
+            { category: 'Window', name: 'set_space', desc: 'Switch space', params: [{name: 'index', type: 'number', default: 1}] },
+            { category: 'App Integration', name: 'mail', desc: 'Mail actions', params: [{name: 'action', type: 'select', options: ['compose', 'search', 'list-unread'], default: 'list-unread'}] },
+            { category: 'App Integration', name: 'calendar', desc: 'Calendar actions', params: [{name: 'action', type: 'select', options: ['create-event', 'list-today'], default: 'list-today'}] },
+            { category: 'App Integration', name: 'messages', desc: 'Messages actions', params: [{name: 'action', type: 'select', options: ['send', 'list-recent'], default: 'list-recent'}] },
+            { category: 'App Integration', name: 'safari', desc: 'Safari actions', params: [{name: 'action', type: 'select', options: ['open-url', 'get-tabs', 'run-js-on-active-tab'], default: 'get-tabs'}] },
+            { category: 'App Integration', name: 'notes', desc: 'Notes actions', params: [{name: 'action', type: 'select', options: ['create', 'search', 'append'], default: 'search'}, {name: 'query', type: 'text', default: 'test'}] },
+            { category: 'App Integration', name: 'terminal', desc: 'Terminal actions', params: [{name: 'action', type: 'select', options: ['open_window', 'run_command', 'send_text', 'get_active_text', 'list_sessions'], default: 'list_sessions'}] },
+            { category: 'Custom', name: 'run_applescript', desc: 'Run AppleScript', params: [{name: 'script', type: 'text', default: 'return "hello"'}] },
+        ];
+
+        function renderTools(filteredTools) {
+            const container = document.getElementById('toolsContainer');
+            container.innerHTML = '';
+            
+            const categories = [...new Set(filteredTools.map(t => t.category))];
+            categories.forEach(category => {
+                const categoryTools = filteredTools.filter(t => t.category === category);
+                const section = document.createElement('div');
+                section.className = 'col-span-full category-section pl-4 mb-4';
+                section.innerHTML = `<h2 class="text-lg font-semibold text-blue-400 mb-3">${category}</h2>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                
+                categoryTools.forEach(tool => {
+                    const card = document.createElement('div');
+                    card.className = 'tool-card bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-blue-500';
+                    card.innerHTML = `
+                        <h3 class="font-semibold text-blue-300 mb-2">${tool.name}</h3>
+                        <p class="text-sm text-gray-400 mb-3">${tool.desc}</p>
+                        ${renderParams(tool.params)}
+                        <button onclick="executeTool('${tool.name}', '${category}')" 
+                            class="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition">
+                            Run Test
+                        </button>
+                    `;
+                    grid.appendChild(card);
+                });
+                
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+        }
+
+        function renderParams(params) {
+            if (params.length === 0) return '';
+            
+            return params.map(p => {
+                if (p.type === 'select') {
+                    return `<div class="mb-2">
+                        <label class="text-xs text-gray-400">${p.name}</label>
+                        <select id="param_${p.name}" class="w-full px-2 py-1 bg-gray-700 rounded text-sm">
+                            ${p.options.map(o => `<option value="${o}" ${o === p.default ? 'selected' : ''}>${o}</option>`).join('')}
+                        </select>
+                    </div>`;
+                } else if (p.type === 'boolean') {
+                    return `<div class="mb-2 flex items-center gap-2">
+                        <input type="checkbox" id="param_${p.name}" ${p.default ? 'checked' : ''} class="rounded">
+                        <label class="text-xs text-gray-400">${p.name}</label>
+                    </div>`;
+                } else if (p.type === 'number') {
+                    return `<div class="mb-2">
+                        <label class="text-xs text-gray-400">${p.name}</label>
+                        <input type="number" id="param_${p.name}" value="${p.default}" 
+                            class="w-full px-2 py-1 bg-gray-700 rounded text-sm">
+                    </div>`;
+                } else {
+                    return `<div class="mb-2">
+                        <label class="text-xs text-gray-400">${p.name}</label>
+                        <input type="text" id="param_${p.name}" value="${p.default}" 
+                            class="w-full px-2 py-1 bg-gray-700 rounded text-sm">
+                    </div>`;
+                }
+            }).join('');
+        }
+
+        function getParamValue(name, type) {
+            const el = document.getElementById(`param_${name}`);
+            if (!el) return null;
+            if (type === 'boolean') return el.checked;
+            if (type === 'number') return parseFloat(el.value);
+            if (type === 'select') return el.value;
+            return el.value;
+        }
+
+        async function executeTool(toolName, category) {
+            const tool = tools.find(t => t.name === toolName && t.category === category);
+            if (!tool) return;
+            
+            const params = {};
+            tool.params.forEach(p => {
+                const value = getParamValue(p.name, p.type);
+                if (value !== null && value !== '') {
+                    if (p.name === 'paths' || p.name === 'args') {
+                        try { params[p.name] = JSON.parse(value); } catch { params[p.name] = value; }
+                    } else if (p.name === 'modifiers' && value) {
+                        params[p.name] = value.split(',').map(s => s.trim()).filter(s => s);
+                    } else {
+                        params[p.name] = value;
+                    }
+                }
+            });
+
+            showResult(toolName, { status: 'pending', params });
+            
+            try {
+                const response = await fetch('http://localhost:8000/tools/' + toolName, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params || {})
+                });
+                
+                const result = await response.json();
+                showResult(toolName, result);
+            } catch (error) {
+                showResult(toolName, { error: error.message, note: 'Make sure the MCP server is running on port 8000' });
+            }
+        }
+
+        function showResult(toolName, result) {
+            document.getElementById('modalTitle').textContent = toolName;
+            document.getElementById('modalResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('resultModal').classList.remove('hidden');
+            document.getElementById('resultModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+            document.getElementById('resultModal').classList.remove('flex');
+        }
+
+        function populateCategoryFilter() {
+            const categories = [...new Set(tools.map(t => t.category))].sort();
+            const select = document.getElementById('categoryFilter');
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = tools.filter(t => 
+                t.name.toLowerCase().includes(query) || 
+                t.desc.toLowerCase().includes(query) ||
+                t.category.toLowerCase().includes(query)
+            );
+            renderTools(filtered);
+        });
+
+        document.getElementById('categoryFilter').addEventListener('change', (e) => {
+            const cat = e.target.value;
+            const filtered = cat === 'all' ? tools : tools.filter(t => t.category === cat);
+            renderTools(filtered);
+        });
+
+        populateCategoryFilter();
+        renderTools(tools);
+    </script>
+</body>
+</html>
