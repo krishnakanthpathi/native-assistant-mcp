@@ -212,11 +212,11 @@ class MCPHTTPHandler(BaseHTTPRequestHandler):
             res = subprocess.run(['shortcuts', 'list'], capture_output=True, text=True)
             return [s for s in res.stdout.strip().split('\n') if s]
         
-        elif tool_name == 'run_applescript':
+        elif tool_name == 'run_powershell':
             script = params.get('script')
             if not script:
                 raise ValueError('script is required')
-            res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+            res = subprocess.run(['powershell', '-Command', script], capture_output=True, text=True)
             if res.returncode != 0:
                 raise ValueError(res.stderr)
             return res.stdout.strip() or 'Success'
