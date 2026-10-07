@@ -27,6 +27,12 @@ if sys.platform == 'darwin':
     from tools.mac.system.get_date_time import register as reg_date_time
     from tools.mac.system.clipboard_read import register as reg_clip_read
     from tools.mac.system.clipboard_write import register as reg_clip_write
+    from tools.mac.system.wifi_control import register as reg_wifi_control
+
+    from tools.mac.finder.reveal_in_finder import register as reg_reveal_in_finder
+    from tools.mac.finder.quick_look import register as reg_quick_look
+    from tools.mac.finder.spotlight_search import register as reg_spotlight_search
+    from tools.mac.finder.get_finder_selection import register as reg_get_finder_selection
     
     from tools.mac.input.mouse_move import register as reg_mouse_move
     from tools.mac.input.mouse_click import register as reg_mouse_click
@@ -102,6 +108,7 @@ if sys.platform == 'darwin':
     reg_date_time(mcp)
     reg_clip_read(mcp)
     reg_clip_write(mcp)
+    reg_wifi_control(mcp)
     
     reg_mouse_move(mcp)
     reg_mouse_click(mcp)
@@ -155,6 +162,11 @@ if sys.platform == 'darwin':
     reg_terminal(mcp)
     
     reg_applescript(mcp)
+    
+    reg_reveal_in_finder(mcp)
+    reg_quick_look(mcp)
+    reg_spotlight_search(mcp)
+    reg_get_finder_selection(mcp)
     
 elif sys.platform == 'win32':
     from tools.windows.volume.volume_set import register as reg_win_vol_set
@@ -231,6 +243,7 @@ elif sys.platform == 'win32':
     from tools.windows.app_integration.powershell_app import register as reg_win_terminal
     
     from tools.windows.custom.run_powershell import register as reg_win_powershell
+    from tools.windows.finder.reveal_in_explorer import register as reg_win_reveal_in_explorer
     
     reg_win_vol_set(mcp)
     reg_win_vol_get(mcp)
@@ -306,6 +319,7 @@ elif sys.platform == 'win32':
     reg_win_terminal(mcp)
     
     reg_win_powershell(mcp)
+    reg_win_reveal_in_explorer(mcp)
 
 
 if __name__ == "__main__":

@@ -21,9 +21,12 @@ class TestWaitMs:
         assert "waited" in result.lower() or "finished" in result.lower()
     
     def test_wait_ms_caps_at_60000(self):
+        from unittest.mock import patch
         from tools.mac.shortcuts.wait_ms import register
         from fastmcp import FastMCP
         mcp = FastMCP("test")
         register(mcp)
-        result = mcp.call_tool("wait_ms", {"ms": 100000})
-        assert "60000" in result
+        with patch("time.sleep") as mock_sleep:
+            result = mcp.call_tool("wait_ms", {"ms": 100000})
+            assert "60000" in result
+            mock_sleep.assert_called_once_with(60.0)

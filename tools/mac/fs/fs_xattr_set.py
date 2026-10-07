@@ -1,12 +1,13 @@
+import tempfile
+import os
 import subprocess
 import base64
 from fastmcp import FastMCP
 
-ALLOWED_ROOTS = ['/Users/krishnakanth']
+ALLOWED_ROOTS = [os.path.expanduser('~'), '/tmp', '/private/tmp', tempfile.gettempdir(), '/private/var']
 
 
 def validate_path(target_path):
-    import os
     resolved = os.path.abspath(target_path)
     allowed = any(resolved == root or resolved.startswith(root + os.sep) for root in ALLOWED_ROOTS)
     if not allowed:

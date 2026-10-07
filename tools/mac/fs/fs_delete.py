@@ -1,9 +1,10 @@
+import tempfile
 import os
 import shutil
 import subprocess
 from fastmcp import FastMCP
 
-ALLOWED_ROOTS = ['/Users/krishnakanth']
+ALLOWED_ROOTS = [os.path.expanduser('~'), '/tmp', '/private/tmp', tempfile.gettempdir(), '/private/var']
 
 
 def validate_path(target_path):
