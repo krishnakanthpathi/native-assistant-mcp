@@ -6,7 +6,8 @@ from fastmcp import FastMCP
 DEFAULT_ALLOWED_PROCESSES = [
     'git', 'rg', 'gh', 'fd', 'python3', 'node', 'npm', 'npx',
     'swift', 'swiftc', 'osascript', 'cupsfilter', 'qlmanage',
-    'shortcuts', 'open', 'screencapture', 'cat', 'ls', 'echo', 'ps'
+    'shortcuts', 'open', 'screencapture', 'cat', 'ls', 'echo', 'ps',
+    'lmem', 'zsh', 'bash', 'sh'
 ]
 
 ALLOWED_PROCESSES = os.environ.get('MAC_MCP_PROCESS_ALLOW', '').split(':') + DEFAULT_ALLOWED_PROCESSES if os.environ.get('MAC_MCP_PROCESS_ALLOW') else DEFAULT_ALLOWED_PROCESSES
@@ -25,7 +26,17 @@ def register(mcp: FastMCP):
     @mcp.tool()
     def process_start(command: str, args: list = None) -> str:
         """Start an allow-listed process asynchronously, returning a session ID."""
-        args = args or []
+        import shlex
+        args = list(args) if args else []
+        if not args and (' ' in command.strip() or '\t' in command.strip()):
+            try:
+                parts = shlex.split(command.strip())
+                if parts:
+                    command = parts[0]
+                    args = parts[1:]
+            except Exception:
+                pass
+
         check_command_allowed(command)
         
         import uuid
