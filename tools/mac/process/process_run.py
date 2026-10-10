@@ -38,13 +38,31 @@ def register(mcp: FastMCP):
             except Exception:
                 pass
 
+        import shutil
+        from pathlib import Path
+
         check_command_allowed(command)
         
         env = os.environ.copy()
         env['PAGER'] = 'cat'
+
+        home = str(Path.home())
+        extra_paths = [
+            f"{home}/.local/bin",
+            f"{home}/.lightmem/bin",
+            "/opt/homebrew/bin",
+            "/opt/homebrew/sbin",
+            "/usr/local/bin",
+            "/Library/Frameworks/Python.framework/Versions/3.14/bin",
+            "/Library/Frameworks/Python.framework/Versions/3.12/bin",
+        ]
+        existing_path = env.get("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+        env["PATH"] = ":".join(extra_paths) + ":" + existing_path
+
+        cmd_path = shutil.which(command, path=env["PATH"]) or command
         
         res = subprocess.run(
-            [command] + args,
+            [cmd_path] + args,
             capture_output=True,
             text=True,
             timeout=timeout_ms / 1000,
