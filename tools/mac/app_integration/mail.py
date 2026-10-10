@@ -7,7 +7,8 @@ def register(mcp: FastMCP):
     @mcp.tool()
     def mail(action: str, to: str = None, subject: str = None, body: str = None, query: str = None) -> str:
         """Interact with Mail.app: compose outgoing messages, search messages, or list unread inbox messages."""
-        if action == 'compose':
+        act = (action or "").strip().lower().replace("_", "-")
+        if act in ('compose', 'send', 'new', 'draft'):
             if not to:
                 raise ValueError('Recipient "to" is required for compose')
             script = f'''
@@ -22,7 +23,7 @@ end tell
             subprocess.run(['osascript', '-e', script], check=True)
             return 'Draft email composed successfully in Mail.app.'
         
-        elif action == 'list-unread':
+        elif act in ('list-unread', 'unread', 'inbox'):
             script = '''
 tell application "Mail"
     set outputText to ""
@@ -52,7 +53,7 @@ end tell
                     messages.append({'sender': parts[0], 'subject': parts[1], 'date': parts[2]})
             return json.dumps(messages, indent=2)
         
-        elif action == 'search':
+        elif act in ('search', 'find', 'query'):
             if not query:
                 raise ValueError('Search "query" is required')
             script = f'''
@@ -83,3 +84,6 @@ end tell
                 if len(parts) >= 3:
                     messages.append({'sender': parts[0], 'subject': parts[1], 'date': parts[2]})
             return json.dumps(messages, indent=2)
+
+        else:
+            raise ValueError(f"Unknown mail action '{action}'. Supported actions: 'compose', 'list-unread', 'search'")

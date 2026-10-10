@@ -7,7 +7,8 @@ def register(mcp: FastMCP):
     @mcp.tool()
     def calendar(action: str, title: str = None, start_date: str = None, end_date: str = None) -> str:
         """Manage Calendar.app events: create calendar events or list events scheduled for today."""
-        if action == 'create-event':
+        act = (action or "").strip().lower().replace("_", "-")
+        if act in ('create-event', 'create', 'add'):
             if not title or not start_date or not end_date:
                 raise ValueError('title, start_date, and end_date are required to create an event')
             
@@ -21,7 +22,7 @@ end tell
             subprocess.run(['osascript', '-e', script], check=True)
             return f'Event "{title}" created successfully in Calendar.app.'
         
-        elif action == 'list-today':
+        elif act in ('list-today', 'today', 'list', 'events'):
             script = '''
 tell application "Calendar"
     set outputText to ""
@@ -55,3 +56,6 @@ end tell
                 if len(parts) >= 3:
                     events.append({'summary': parts[0], 'start': parts[1], 'end': parts[2]})
             return json.dumps(events, indent=2)
+
+        else:
+            raise ValueError(f"Unknown calendar action '{action}'. Supported actions: 'create-event', 'list-today'")

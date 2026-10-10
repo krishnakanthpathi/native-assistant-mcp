@@ -6,8 +6,8 @@ from fastmcp import FastMCP
 def register(mcp: FastMCP):
     @mcp.tool()
     def notes(action: str, title: str = None, body: str = None, query: str = None, note_id: str = None) -> str:
-        """Interact with Notes.app: create a new note, search for notes, or append text to an existing note."""
-        if action == 'create':
+        act = (action or "").strip().lower().replace("_", "-")
+        if act in ('create', 'new', 'create-note'):
             if not title or not body:
                 raise ValueError('title and body are required for create action')
             
@@ -21,7 +21,7 @@ end tell
             subprocess.run(['osascript', '-e', script], check=True)
             return f'Note "{title}" created successfully.'
         
-        elif action == 'search':
+        elif act in ('search', 'find', 'list'):
             if not query:
                 raise ValueError('query is required for search action')
             
@@ -52,7 +52,7 @@ end tell
                     notes_list.append({'name': parts[0], 'id': parts[1]})
             return json.dumps(notes_list, indent=2)
         
-        elif action == 'append':
+        elif act in ('append', 'add'):
             if not note_id or not body:
                 raise ValueError('note_id and body are required for append action')
             
@@ -72,3 +72,6 @@ end tell
                 return 'Content appended to note successfully.'
             else:
                 raise ValueError(f'AppleScript error: {res.stdout.strip()}')
+        
+        else:
+            raise ValueError(f"Unknown notes action '{action}'. Supported actions: 'create', 'search', 'append'")

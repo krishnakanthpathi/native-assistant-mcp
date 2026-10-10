@@ -7,7 +7,8 @@ def register(mcp: FastMCP):
     @mcp.tool()
     def messages(action: str, recipient: str = None, message: str = None) -> str:
         """Interact with Messages.app: send text messages or list recent buddy conversations."""
-        if action == 'send':
+        act = (action or "").strip().lower().replace("_", "-")
+        if act in ('send', 'send-message'):
             if not recipient or not message:
                 raise ValueError('recipient and message are required')
             
@@ -21,7 +22,7 @@ end tell
             subprocess.run(['osascript', '-e', script], check=True)
             return f'Message sent successfully to {recipient}.'
         
-        elif action == 'list-recent':
+        elif act in ('list-recent', 'list', 'recent', 'chats'):
             script = '''
 tell application "Messages"
     set outputText to ""
@@ -47,3 +48,6 @@ end tell
                 if len(parts) >= 2:
                     chats.append({'name': parts[0], 'id': parts[1]})
             return json.dumps(chats, indent=2)
+
+        else:
+            raise ValueError(f"Unknown messages action '{action}'. Supported actions: 'send', 'list-recent'")
