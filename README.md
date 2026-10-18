@@ -25,11 +25,8 @@ A pure-Python **FastMCP** server providing 70+ native OS capabilities to AI agen
 ```
 native-assistant-mcp/
 ├── server.py              # FastMCP server entrypoint (platform-conditional loader)
-├── http_server.py         # HTTP server bridging MCP to the local testing UI
 ├── requirements.txt       # Core dependencies (fastmcp, watchdog)
 ├── README.md              # Documentation & tool reference
-├── frontend/              # Interactive browser testing dashboard
-│   └── index.html         # Web UI for real-time tool execution & telemetry
 └── tools/                 # Modular tool implementations
     ├── mac/               # macOS automation modules
     │   ├── active_window/ # Active application & window title inspection
@@ -70,17 +67,9 @@ pip install -r requirements.txt
 
 ### 2. Running the Server
 
-#### Stdio Mode (Standard for AI Agents)
 ```bash
 python server.py
 ```
-
-#### Interactive Web Dashboard
-Test all tools interactively in your browser:
-```bash
-python http_server.py
-```
-Open `http://localhost:8080` (or `frontend/index.html`) in your browser to inspect real-time outputs and system status.
 
 ---
 
