@@ -77,8 +77,8 @@ if sys.platform == 'darwin':
     from tools.mac.window.move_window import register as reg_win_move
     from tools.mac.window.resize_window import register as reg_win_resize
     from tools.mac.window.set_space import register as reg_win_set_space
+    from tools.mac.window.list_spaces import register as reg_win_list_spaces
     
-    from tools.mac.app_integration.mail import register as reg_mail
     from tools.mac.app_integration.calendar import register as reg_calendar
     from tools.mac.app_integration.messages import register as reg_messages
     from tools.mac.app_integration.safari import register as reg_safari
@@ -153,8 +153,8 @@ if sys.platform == 'darwin':
     reg_win_move(mcp)
     reg_win_resize(mcp)
     reg_win_set_space(mcp)
+    reg_win_list_spaces(mcp)
     
-    reg_mail(mcp)
     reg_calendar(mcp)
     reg_messages(mcp)
     reg_safari(mcp)

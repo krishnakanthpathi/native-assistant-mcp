@@ -14,6 +14,7 @@ def register(mcp: FastMCP):
             raise ValueError('Process session is already closed.')
         
         session['process'].stdin.write(input_text)
+        session['process'].stdin.flush()
         if close_after:
             session['process'].stdin.close()
         

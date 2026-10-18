@@ -1,6 +1,7 @@
 import subprocess
 import os
 import time
+import json
 from fastmcp import FastMCP
 
 DEFAULT_ALLOWED_PROCESSES = [
@@ -63,15 +64,35 @@ def register(mcp: FastMCP):
         }
         
         import threading
-        
-        def read_output():
-            stdout, stderr = proc.communicate()
-            async_sessions[session_id]['stdout'] = stdout
-            async_sessions[session_id]['stderr'] = stderr
-            async_sessions[session_id]['exit_code'] = proc.returncode
-            async_sessions[session_id]['closed'] = True
-        
-        thread = threading.Thread(target=read_output)
+
+        def read_stream(stream, key):
+            try:
+                for line in iter(stream.readline, ''):
+                    if session_id in async_sessions:
+                        async_sessions[session_id][key] += line
+                    else:
+                        break
+            except Exception:
+                pass
+            finally:
+                try:
+                    stream.close()
+                except Exception:
+                    pass
+
+        def monitor_process():
+            t1 = threading.Thread(target=read_stream, args=(proc.stdout, 'stdout'), daemon=True)
+            t2 = threading.Thread(target=read_stream, args=(proc.stderr, 'stderr'), daemon=True)
+            t1.start()
+            t2.start()
+            proc.wait()
+            t1.join(timeout=1.0)
+            t2.join(timeout=1.0)
+            if session_id in async_sessions:
+                async_sessions[session_id]['exit_code'] = proc.returncode
+                async_sessions[session_id]['closed'] = True
+
+        thread = threading.Thread(target=monitor_process, daemon=True)
         thread.start()
-        
+
         return json.dumps({'sessionId': session_id, 'pid': proc.pid})

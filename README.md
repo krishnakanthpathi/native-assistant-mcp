@@ -22,12 +22,6 @@ python http_server.py
 
 Then open `frontend/index.html` in your browser to test tools interactively.
 
-## Running Tests
-
-```bash
-pytest tests/ -v
-```
-
 ## Architecture
 
 The server uses a modular architecture with tools organized by function:
@@ -114,9 +108,9 @@ Tools are conditionally loaded based on the operating system.
 - `move_window(id, x, y)` - Move window
 - `resize_window(id, w, h)` - Resize window
 - `set_space(index)` - Switch space
+- `list_spaces()` - List all Mission Control spaces, IDs, active space, and window counts
 
 ### App Integration
-- `mail(action, ...)` - Mail.app actions
 - `calendar(action, ...)` - Calendar.app actions
 - `messages(action, ...)` - Messages.app actions
 - `safari(action, ...)` - Safari actions
@@ -133,13 +127,10 @@ native-assistant-mcp/
 ├── server.py              # MCP entrypoint
 ├── http_server.py         # HTTP server for frontend testing
 ├── requirements.txt       # Python dependencies
-├── pytest.ini             # Pytest configuration
 ├── README.md
 ├── tools/                 # Tool modules
 │   ├── mac/              # macOS tools
 │   └── windows/          # Windows tools
-├── tests/                 # Test files
-│   └── mac/              # macOS tool tests
 └── frontend/              # Web testing UI
     └── index.html
 ```

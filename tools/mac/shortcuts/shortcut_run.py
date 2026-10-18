@@ -14,8 +14,11 @@ def register(mcp: FastMCP):
         
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         
+        if res.returncode != 0:
+            raise RuntimeError(f"Shortcut '{name}' failed: {res.stderr.strip() or 'Unknown error'}")
+
         output = f'Shortcut executed successfully. Output: {res.stdout.strip() or "No output."}'
         if res.stderr.strip():
-            output += f' Errors: {res.stderr}'
+            output += f' Warnings: {res.stderr.strip()}'
         
         return output

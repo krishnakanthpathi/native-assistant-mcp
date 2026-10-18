@@ -47,7 +47,7 @@ if result == .success, let windows = windowList as? [AXUIElement] {
         
         if targetTitle != nil && title == targetTitle {
             var pos = CGPoint(x: targetX, y: targetY)
-            if let axPos = AXValueCreate(.cfPoint, &pos) {
+            if let axPos = AXValueCreate(.cgPoint, &pos) {
                 let err = AXUIElementSetAttributeValue(w, kAXPositionAttribute as CFString, axPos)
                 if err == .success {
                     print("Window moved successfully.")
@@ -64,4 +64,7 @@ print("Could not move window.")
 exit(1)
 '''
         res = subprocess.run(['swift', '-', str(window_id), str(x), str(y)], input=swift_code, capture_output=True, text=True)
+        if res.returncode != 0:
+            err = res.stdout.strip() or res.stderr.strip() or 'Could not move window.'
+            raise RuntimeError(err)
         return res.stdout.strip() or 'Window moved.'

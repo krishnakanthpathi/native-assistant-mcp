@@ -56,4 +56,7 @@ if result == .success, let windows = windowList as? [AXUIElement] {
 print("Activated application holding the window.")
 '''
         res = subprocess.run(['swift', '-', str(window_id)], input=swift_code, capture_output=True, text=True)
+        if res.returncode != 0:
+            err = res.stdout.strip() or res.stderr.strip() or 'Window not found in on-screen window list.'
+            raise RuntimeError(err)
         return res.stdout.strip() or 'Window focused.'

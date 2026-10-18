@@ -6,6 +6,7 @@ from fastmcp import FastMCP
 def register(mcp: FastMCP):
     @mcp.tool()
     def notes(action: str, title: str = None, body: str = None, query: str = None, note_id: str = None) -> str:
+        """Interact with Apple Notes: create notes, search notes, or append content to existing notes."""
         act = (action or "").strip().lower().replace("_", "-")
         if act in ('create', 'new', 'create-note'):
             if not title or not body:

@@ -47,7 +47,7 @@ if result == .success, let windows = windowList as? [AXUIElement] {
         
         if targetTitle != nil && title == targetTitle {
             var size = CGSize(width: targetW, height: targetH)
-            if let axSize = AXValueCreate(.cfSize, &size) {
+            if let axSize = AXValueCreate(.cgSize, &size) {
                 let err = AXUIElementSetAttributeValue(w, kAXSizeAttribute as CFString, axSize)
                 if err == .success {
                     print("Window resized successfully.")
@@ -64,4 +64,7 @@ print("Could not resize window.")
 exit(1)
 '''
         res = subprocess.run(['swift', '-', str(window_id), str(width), str(height)], input=swift_code, capture_output=True, text=True)
+        if res.returncode != 0:
+            err = res.stdout.strip() or res.stderr.strip() or 'Could not resize window.'
+            raise RuntimeError(err)
         return res.stdout.strip() or 'Window resized.'

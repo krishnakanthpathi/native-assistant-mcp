@@ -45,7 +45,7 @@ exit(1)
             
             mirror_window_id = res.stdout.strip()
             file_path = os.path.join(target_dir, f'iphone_mirror_screenshot_{timestamp}.png')
-            subprocess.run(['screencapture', '-l', mirror_window_id, file_path], check=True)
+            subprocess.run(['screencapture', '-x', '-l', mirror_window_id, file_path], check=True)
         
         else:
             file_path = os.path.join(target_dir, f'screenshot_{timestamp}.png')
